@@ -50,12 +50,8 @@ const socketUserMap = new Map<string, { userId: string; roomId: string }>();
 io.on('connection', (socket: Socket) => {
   console.log(`[Socket] Connected: ${socket.id}`);
 
-  // ─── JOIN ROOM ────────────────────────────────────────────────────────────
-  socket.on('join-room', ({ roomId, userId, displayName }: JoinRoomPayload) => {
-    // Get or create room; first joiner is host
-    const existingRoom = roomManager.getRoom(roomId);
-    const isHost = !existingRoom;
-
+  // Helper to complete user admission to a room
+  const admitUser = (targetSocket: Socket, roomId: string, userId: string, displayName: string, isHost: boolean) => {
     const room = roomManager.createOrGetRoom(roomId, userId);
 
     const participant: Participant = {
@@ -68,29 +64,82 @@ io.on('connection', (socket: Socket) => {
       joinedAt: Date.now(),
     };
 
-    // Get existing participants BEFORE adding the new one (for signaling)
     const existingParticipants = roomManager.getParticipants(roomId);
 
     roomManager.addParticipant(roomId, participant);
-    socket.join(roomId);
-    socketUserMap.set(socket.id, { userId, roomId });
+    targetSocket.join(roomId);
+    socketUserMap.set(targetSocket.id, { userId, roomId });
 
-    // Tell the new user about everyone already in the room
-    socket.emit('room-joined', {
+    // Approve the client and pass initial room state
+    targetSocket.emit('room-joined', {
       roomId,
       participants: existingParticipants,
       isHost,
       hostId: room.hostId,
     });
 
-    // Tell everyone else a new user joined (they'll initiate offers)
-    socket.to(roomId).emit('user-joined', {
+    // Notify other peers in the room to start WebRTC offers
+    targetSocket.to(roomId).emit('user-joined', {
       userId,
       displayName,
       isHost: false,
     });
 
-    console.log(`[Signaling] ${displayName} (${userId}) joined room ${roomId}`);
+    console.log(`[Signaling] ${displayName} (${userId}) joined room ${roomId} (isHost: ${isHost})`);
+  };
+
+  // ─── JOIN ROOM / LOBBY ADMISSION ───────────────────────────────────────────
+  socket.on('request-join', ({ roomId, userId, displayName }: JoinRoomPayload) => {
+    const existingRoom = roomManager.getRoom(roomId);
+
+    // If the room doesn't exist, this user is the host. Admit them instantly.
+    if (!existingRoom) {
+      console.log(`[Lobby] Room ${roomId} does not exist. Admitting ${displayName} as Host.`);
+      admitUser(socket, roomId, userId, displayName, true);
+      return;
+    }
+
+    // Room exists. Route join request to host.
+    const hostId = existingRoom.hostId;
+    const hostSocketId = findSocketByUserId(hostId);
+
+    if (!hostSocketId) {
+      // Host disconnected or socket missing. Fallback to direct admission.
+      console.warn(`[Lobby] Host socket for room ${roomId} not found. Admitting user directly.`);
+      admitUser(socket, roomId, userId, displayName, false);
+      return;
+    }
+
+    // Notify candidate they are in lobby, and notify host of join request
+    socket.emit('join-waiting');
+    io.to(hostSocketId).emit('admission-request', {
+      userId,
+      displayName,
+      socketId: socket.id,
+    });
+    console.log(`[Lobby] User ${displayName} (${userId}) waiting for host approval in room ${roomId}.`);
+  });
+
+  socket.on('admission-response', ({ roomId, userId, allowed, pendingSocketId, displayName }: {
+    roomId: string;
+    userId: string;
+    allowed: boolean;
+    pendingSocketId: string;
+    displayName: string;
+  }) => {
+    const pendingSocket = io.sockets.sockets.get(pendingSocketId);
+    if (!pendingSocket) {
+      console.warn(`[Lobby] Pending socket ${pendingSocketId} not found.`);
+      return;
+    }
+
+    if (allowed) {
+      console.log(`[Lobby] Host approved admission for ${displayName} in room ${roomId}.`);
+      admitUser(pendingSocket, roomId, userId, displayName, false);
+    } else {
+      console.log(`[Lobby] Host denied admission for ${displayName} in room ${roomId}.`);
+      pendingSocket.emit('join-denied');
+    }
   });
 
   // ─── WEBRTC SIGNALING ─────────────────────────────────────────────────────

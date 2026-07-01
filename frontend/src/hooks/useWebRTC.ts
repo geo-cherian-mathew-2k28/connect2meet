@@ -43,6 +43,9 @@ export interface UseWebRTCReturn {
   sendReaction: (emoji: string) => void;
   leaveRoom: () => void;
   getActivePeerConnection: () => RTCPeerConnection | null;
+  admissionStatus: 'idle' | 'waiting' | 'approved' | 'denied';
+  pendingAdmissions: { userId: string; displayName: string; socketId: string }[];
+  respondToAdmission: (pendingSocketId: string, allowed: boolean) => void;
 }
 
 export function useWebRTC(roomId: string | null, userId: string, displayName: string): UseWebRTCReturn {
@@ -125,6 +128,9 @@ export function useWebRTC(roomId: string | null, userId: string, displayName: st
   const [isHandRaised, setIsHandRaised] = useState(false);
   const [connectionState, setConnectionState] = useState<RTCPeerConnectionState | null>(null);
   const [iceState, setIceState] = useState<RTCIceConnectionState | null>(null);
+
+  const [admissionStatus, setAdmissionStatus] = useState<'idle' | 'waiting' | 'approved' | 'denied'>('idle');
+  const [pendingAdmissions, setPendingAdmissions] = useState<{ userId: string; displayName: string; socketId: string }[]>([]);
 
   // Helper to sync ref + state for remoteStreams
   const updateRemoteStreams = useCallback(() => {
@@ -257,8 +263,19 @@ export function useWebRTC(roomId: string | null, userId: string, displayName: st
 
     connectSocket();
 
-    // Handler: room-joined tells us who's already there
+    // Handler: wait in lobby
+    socket.on('join-waiting', () => {
+      setAdmissionStatus('waiting');
+    });
+
+    // Handler: denied entry by host
+    socket.on('join-denied', () => {
+      setAdmissionStatus('denied');
+    });
+
+    // Handler: room-joined tells us who's already there (approved entry)
     socket.on('room-joined', async ({ participants, isHost, hostId }: RoomJoinedPayload) => {
+      setAdmissionStatus('approved');
       store.setRoom(roomId, userId, isHost, hostId);
       store.setParticipants(participants);
 
@@ -277,6 +294,11 @@ export function useWebRTC(roomId: string | null, userId: string, displayName: st
           console.error('[WebRTC] Failed to create offer for', participant.userId, e);
         }
       }
+    });
+
+    // Handler: for host, receive other users requests to join
+    socket.on('admission-request', (req: { userId: string; displayName: string; socketId: string }) => {
+      setPendingAdmissions((prev) => [...prev.filter((r) => r.userId !== req.userId), req]);
     });
 
     // Handler: new user joined — they will send us an offer
@@ -367,14 +389,17 @@ export function useWebRTC(roomId: string | null, userId: string, displayName: st
       setTimeout(() => store.removeReaction(id), 4000);
     });
 
-    // Start media then join
+    // Start media then request join
     startLocalMedia().then(() => {
-      socket.emit('join-room', { roomId, userId, displayName });
+      socket.emit('request-join', { roomId, userId, displayName });
     });
 
     return () => {
       // Cleanup on unmount
+      socket.off('join-waiting');
+      socket.off('join-denied');
       socket.off('room-joined');
+      socket.off('admission-request');
       socket.off('user-joined');
       socket.off('offer');
       socket.off('answer');
@@ -580,6 +605,21 @@ export function useWebRTC(roomId: string | null, userId: string, displayName: st
     return pcs.values().next().value || null;
   }, []);
 
+  const respondToAdmission = useCallback((pendingSocketId: string, allowed: boolean) => {
+    const request = pendingAdmissions.find((r) => r.socketId === pendingSocketId);
+    if (!request) return;
+
+    socket.emit('admission-response', {
+      roomId,
+      userId: request.userId,
+      allowed,
+      pendingSocketId,
+      displayName: request.displayName,
+    });
+
+    setPendingAdmissions((prev) => prev.filter((r) => r.socketId !== pendingSocketId));
+  }, [roomId, pendingAdmissions, socket]);
+
   return {
     localStream,
     remoteStreams,
@@ -598,5 +638,8 @@ export function useWebRTC(roomId: string | null, userId: string, displayName: st
     sendReaction,
     leaveRoom,
     getActivePeerConnection,
+    admissionStatus,
+    pendingAdmissions,
+    respondToAdmission,
   };
 }

@@ -1,7 +1,7 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Video, Wifi, WifiOff, ArrowLeft } from 'lucide-react';
+import { Video, Wifi, WifiOff, ArrowLeft, ShieldCheck, Loader2, Lock, Activity } from 'lucide-react';
 import { VideoGrid } from '@/components/meeting/VideoGrid';
 import { Controls } from '@/components/meeting/Controls';
 import { ChatPanel } from '@/components/meeting/ChatPanel';
@@ -23,11 +23,14 @@ export default function Room() {
   const store = useMeetingStore();
   const { settings, localUserId, isInspectorOpen, isChatOpen, isParticipantsPanelOpen } = store;
 
+  const [hasLeft, setHasLeft] = useState(false);
+  const [countdown, setCountdown] = useState(60);
+
   const {
     localStream, remoteStreams, isMuted, isVideoOff, isScreenSharing,
     isHandRaised, connectionState, iceState, toggleMute, toggleVideo,
     startScreenShare, stopScreenShare, toggleHand, sendReaction, leaveRoom,
-    getActivePeerConnection,
+    getActivePeerConnection, admissionStatus, pendingAdmissions, respondToAdmission,
   } = useWebRTC(roomId ?? null, localUserId, settings.displayName);
 
   const { snapshot, history, quality } = useStats(getActivePeerConnection);
@@ -36,9 +39,26 @@ export default function Room() {
   );
   const { participants } = useParticipants(localStream, localUserId);
 
+  useEffect(() => {
+    if (!hasLeft) return;
+
+    const timer = setInterval(() => {
+      setCountdown((prev) => {
+        if (prev <= 1) {
+          clearInterval(timer);
+          navigate('/');
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [hasLeft, navigate]);
+
   const handleLeave = () => {
     leaveRoom();
-    navigate('/');
+    setHasLeft(true);
   };
 
   const handleToggleChat = () => {
@@ -74,8 +94,122 @@ export default function Room() {
 
   if (!roomId) return null;
 
+  if (hasLeft) {
+    return (
+      <div className="h-screen w-screen flex flex-col items-center justify-center bg-[#fafbfe] text-slate-800 p-6">
+        <div className="w-full max-w-md bg-white border border-slate-200/80 shadow-[0_4px_24px_rgba(0,0,0,0.03)] rounded-2xl p-8 text-center space-y-6 animate-in fade-in duration-300">
+          <div className="w-16 h-16 bg-slate-50 border border-slate-200/50 rounded-full flex items-center justify-center mx-auto text-slate-500 shadow-sm">
+            <Video className="w-7 h-7" />
+          </div>
+          <div className="space-y-2">
+            <h1 className="text-2xl font-bold tracking-tight text-slate-900">You left the meeting</h1>
+            <p className="text-sm text-slate-500 font-medium">Returning to home screen in {countdown} seconds...</p>
+          </div>
+          <div className="flex gap-3 justify-center pt-2">
+            <Button
+              variant="outline"
+              onClick={() => navigate('/')}
+              className="border-slate-200 hover:bg-slate-50 font-semibold px-5"
+            >
+              Return to home
+            </Button>
+            <Button
+              onClick={() => window.location.reload()}
+              className="bg-blue-600 hover:bg-blue-500 text-white font-semibold px-5 shadow-sm"
+            >
+              Rejoin
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (admissionStatus === 'waiting') {
+    return (
+      <div className="h-screen w-screen flex flex-col items-center justify-center bg-[#fafbfe] text-slate-800 p-6">
+        <div className="w-full max-w-md bg-white border border-slate-200/80 shadow-[0_4px_24px_rgba(0,0,0,0.03)] rounded-2xl p-8 text-center space-y-6 animate-in fade-in duration-300">
+          <div className="w-16 h-16 bg-blue-50/50 border border-blue-100 rounded-full flex items-center justify-center mx-auto text-blue-600 shadow-sm">
+            <Loader2 className="w-7 h-7 animate-spin" />
+          </div>
+          <div className="space-y-2">
+            <h1 className="text-2xl font-bold tracking-tight text-slate-900">Asking to join...</h1>
+            <p className="text-sm text-slate-500 font-medium">Someone in the meeting will let you in shortly.</p>
+          </div>
+          <div className="pt-2">
+            <Button
+              variant="outline"
+              onClick={handleLeave}
+              className="border-slate-200 hover:bg-slate-50 font-semibold px-5"
+            >
+              Cancel request
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (admissionStatus === 'denied') {
+    return (
+      <div className="h-screen w-screen flex flex-col items-center justify-center bg-[#fafbfe] text-slate-800 p-6">
+        <div className="w-full max-w-md bg-white border border-slate-200/80 shadow-[0_4px_24px_rgba(0,0,0,0.03)] rounded-2xl p-8 text-center space-y-6 animate-in fade-in duration-300">
+          <div className="w-16 h-16 bg-rose-50/80 border border-rose-100 rounded-full flex items-center justify-center mx-auto text-rose-600 shadow-sm">
+            <Lock className="w-7 h-7" />
+          </div>
+          <div className="space-y-2">
+            <h1 className="text-2xl font-bold tracking-tight text-slate-900">You can't join this meeting</h1>
+            <p className="text-sm text-slate-500 font-medium">The host has denied your request to join.</p>
+          </div>
+          <div className="pt-2">
+            <Button
+              onClick={() => navigate('/')}
+              className="bg-slate-950 hover:bg-slate-900 text-white font-semibold px-5"
+            >
+              Return to home
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="h-screen flex flex-col bg-[#fafbfe] overflow-hidden text-slate-800 selection:bg-blue-100">
+    <div className="h-screen flex flex-col bg-[#fafbfe] overflow-hidden text-slate-800 selection:bg-blue-100 relative">
+      {/* Host admission approval notifications */}
+      {store.isHost && pendingAdmissions.length > 0 && (
+        <div className="absolute top-16 right-4 z-50 w-80 space-y-2 pointer-events-auto">
+          {pendingAdmissions.map((req) => (
+            <div
+              key={req.socketId}
+              className="bg-white border border-slate-200 shadow-lg rounded-2xl p-4 flex flex-col gap-3 animate-in slide-in-from-top duration-300"
+            >
+              <div>
+                <p className="text-slate-800 text-sm font-semibold">Someone wants to join</p>
+                <p className="text-slate-500 text-xs truncate font-medium">{req.displayName} wants to join this meeting.</p>
+              </div>
+              <div className="flex gap-2 justify-end">
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => respondToAdmission(req.socketId, false)}
+                  className="text-slate-500 hover:text-slate-800 font-semibold"
+                >
+                  Deny
+                </Button>
+                <Button
+                  size="sm"
+                  onClick={() => respondToAdmission(req.socketId, true)}
+                  className="bg-blue-600 hover:bg-blue-500 text-white font-semibold"
+                >
+                  Admit
+                </Button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
       {/* Top bar */}
       <div className="h-14 bg-white/70 backdrop-blur-md border-b border-slate-200/50 flex items-center justify-between px-6 shrink-0 z-10 shadow-[0_1px_2px_rgba(0,0,0,0.01)]">
         <div className="flex items-center gap-3">
@@ -89,7 +223,14 @@ export default function Room() {
           </Button>
           <div className="w-px h-4 bg-slate-200" />
           <span className="text-slate-800 text-sm font-semibold tracking-tight">{roomId}</span>
+
+          {/* E2EE Lock Indicator */}
+          <div className="flex items-center gap-1.5 ml-2 cursor-help" title="High Security End-to-End Encrypted (DTLS-SRTP)">
+            <Lock className="w-3 h-3 text-emerald-600" />
+            <span className="text-[10px] text-emerald-700 bg-emerald-50/50 border border-emerald-100/60 font-bold px-1.5 py-0.5 rounded">SECURE</span>
+          </div>
         </div>
+
         <div className="flex items-center gap-3">
           {/* Connection status */}
           <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-100 rounded-lg px-2.5 py-1">
@@ -114,6 +255,19 @@ export default function Room() {
           {settings.isLearningMode && (
             <Badge variant="blue" className="text-xs font-semibold">Learning Mode ON</Badge>
           )}
+
+          <div className="w-px h-4 bg-slate-200" />
+
+          {/* Network Inspector Toggle button in header corner */}
+          <Button
+            variant={isInspectorOpen ? "default" : "outline"}
+            size="sm"
+            onClick={() => store.setInspectorOpen(!isInspectorOpen)}
+            className="text-xs font-semibold flex items-center gap-1.5 h-8 border-slate-250 cursor-pointer"
+          >
+            <Activity className="w-3.5 h-3.5" />
+            Diagnostics
+          </Button>
         </div>
       </div>
 

@@ -70,7 +70,7 @@ export const useMeetingStore = create<MeetingStore>()(
       unreadCount: 0,
       isChatOpen: false,
       isParticipantsPanelOpen: false,
-      isInspectorOpen: true,
+      isInspectorOpen: false,
       reactions: [],
       settings: defaultSettings,
 

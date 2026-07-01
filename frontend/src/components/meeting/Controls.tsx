@@ -52,7 +52,7 @@ export function Controls({
   const btnClass = "w-10 h-10 rounded-full flex items-center justify-center border transition-all duration-200 cursor-pointer shadow-sm";
 
   return (
-    <div className="relative h-20 bg-white/90 backdrop-blur-md border-t border-slate-200/60 flex items-center justify-between px-8 shrink-0 select-none">
+    <div className="relative z-40 h-20 bg-white/90 backdrop-blur-md border-t border-slate-200/60 flex items-center justify-between px-8 shrink-0 select-none">
       {/* Left — room info */}
       <div className="flex items-center gap-3">
         <div className="flex flex-col">
@@ -229,22 +229,6 @@ export function Controls({
                 {participantCount}
               </span>
             </div>
-          </button>
-        </Tooltip>
-
-        {/* Network Inspector */}
-        <Tooltip content="Network diagnostic inspector">
-          <button
-            id="btn-inspector"
-            onClick={onToggleInspector}
-            className={cn(
-              btnClass,
-              isInspectorOpen
-                ? "bg-blue-50 border-blue-200 text-blue-600 hover:bg-blue-100"
-                : "bg-white border-slate-200 text-slate-500 hover:bg-slate-50 hover:text-slate-800"
-            )}
-          >
-            <Activity className="w-4.5 h-4.5" />
           </button>
         </Tooltip>
       </div>

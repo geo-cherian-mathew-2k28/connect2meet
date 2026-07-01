@@ -11,9 +11,10 @@ interface VideoTileProps {
   isLocal?: boolean;
   isSpeaking?: boolean;
   isScreenShare?: boolean;
+  className?: string;
 }
 
-export function VideoTile({ participant, stream, isLocal, isSpeaking, isScreenShare }: VideoTileProps) {
+export function VideoTile({ participant, stream, isLocal, isSpeaking, isScreenShare, className }: VideoTileProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
@@ -30,7 +31,8 @@ export function VideoTile({ participant, stream, isLocal, isSpeaking, isScreenSh
     <motion.div
       className={cn(
         'relative video-tile rounded-2xl overflow-hidden bg-white border border-slate-200/70 transition-all duration-300 shadow-sm',
-        isSpeaking && 'ring-2 ring-emerald-500/60 shadow-[0_0_15px_rgba(16,185,129,0.15)] border-emerald-500/40'
+        isSpeaking && 'ring-2 ring-emerald-500/60 shadow-[0_0_15px_rgba(16,185,129,0.15)] border-emerald-500/40',
+        className
       )}
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
