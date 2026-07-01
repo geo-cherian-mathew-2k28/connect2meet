@@ -327,6 +327,18 @@ export function useWebRTC(roomId: string | null, userId: string, displayName: st
     socket.on('offer', async ({ callerId, sdp }: { callerId: string; sdp: RTCSessionDescriptionInit }) => {
       const pc = createPeerConnection(callerId);
       try {
+        const offerCollision = pc.signalingState === 'have-local-offer';
+        if (offerCollision) {
+          // Compare IDs to decide who wins. Smaller string ID is polite.
+          if (userId < callerId) {
+            console.log(`[WebRTC] Collision: rolling back local offer for peer ${callerId}`);
+            await pc.setLocalDescription({ type: 'rollback' });
+          } else {
+            console.log(`[WebRTC] Collision: impolite peer ignoring offer from ${callerId}`);
+            return;
+          }
+        }
+
         await pc.setRemoteDescription(new RTCSessionDescription(sdp));
         const answer = await pc.createAnswer();
         await pc.setLocalDescription(answer);

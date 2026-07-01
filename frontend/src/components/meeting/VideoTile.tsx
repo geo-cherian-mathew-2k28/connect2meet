@@ -31,7 +31,7 @@ export function VideoTile({ participant, stream, isLocal, isSpeaking, isScreenSh
   return (
     <motion.div
       className={cn(
-        'relative video-tile rounded-2xl overflow-hidden bg-white border border-slate-200/70 transition-all duration-300 shadow-sm',
+        'relative video-tile rounded-2xl overflow-hidden bg-white border border-slate-200/70 transition-all duration-300 shadow-sm aspect-video',
         isSpeaking && 'ring-2 ring-emerald-500/60 shadow-[0_0_15px_rgba(16,185,129,0.15)] border-emerald-500/40',
         className
       )}

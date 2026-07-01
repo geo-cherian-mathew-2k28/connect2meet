@@ -52,12 +52,12 @@ export function Controls({
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const btnClass = "w-10 h-10 rounded-full flex items-center justify-center border transition-all duration-200 cursor-pointer shadow-sm";
+  const btnClass = "w-9 h-9 md:w-10 md:h-10 rounded-full flex items-center justify-center border transition-all duration-200 cursor-pointer shadow-sm";
 
   return (
-    <div className="relative z-40 h-20 bg-white/90 backdrop-blur-md border-t border-slate-200/60 flex items-center justify-between px-8 shrink-0 select-none">
-      {/* Left — room info */}
-      <div className="flex items-center gap-3">
+    <div className="relative z-40 h-20 bg-white/90 backdrop-blur-md border-t border-slate-200/60 flex items-center justify-between px-3 md:px-8 shrink-0 select-none">
+      {/* Left — room info (hidden on mobile, shown on desktop) */}
+      <div className="hidden md:flex items-center gap-3">
         <div className="flex flex-col">
           <span className="text-[10px] text-slate-400 font-bold tracking-wide uppercase">Meeting ID</span>
           <span className="font-mono text-xs font-semibold text-slate-800">{roomId}</span>
@@ -73,8 +73,18 @@ export function Controls({
         </Tooltip>
       </div>
 
+      {/* Mobile-only invite link copy (in place of room info) */}
+      <div className="flex md:hidden items-center gap-1">
+        <button
+          onClick={copyLink}
+          className="w-9 h-9 rounded-full bg-slate-50 border border-slate-200/50 text-slate-600 active:bg-slate-100 flex items-center justify-center shadow-sm"
+        >
+          {copied ? <Check className="w-4 h-4 text-emerald-600" /> : <Share2 className="w-4 h-4" />}
+        </button>
+      </div>
+
       {/* Center — core controls */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-1.5 md:gap-3">
         {/* Mute/Unmute */}
         <Tooltip content={isMuted ? 'Unmute microphone' : 'Mute microphone'}>
           <button
@@ -198,15 +208,15 @@ export function Controls({
           <button
             id="btn-leave"
             onClick={onLeave}
-            className="w-11 h-11 rounded-full flex items-center justify-center bg-rose-600 hover:bg-rose-500 text-white hover:scale-105 active:scale-95 transition-all duration-200 cursor-pointer shadow-md shadow-rose-200"
+            className="w-9 h-9 md:w-11 md:h-11 rounded-full flex items-center justify-center bg-rose-600 hover:bg-rose-500 text-white hover:scale-105 active:scale-95 transition-all duration-200 cursor-pointer shadow-md shadow-rose-200"
           >
-            <PhoneOff className="w-4.5 h-4.5" />
+            <PhoneOff className="w-4 h-4 md:w-4.5 md:h-4.5" />
           </button>
         </Tooltip>
       </div>
 
       {/* Right — panels */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-1.5 md:gap-3">
         {/* Chat */}
         <Tooltip content="Chat panel">
           <button

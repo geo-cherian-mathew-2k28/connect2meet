@@ -12,21 +12,6 @@ interface VideoGridProps {
   isInspectorOpen?: boolean;
 }
 
-function getCardSizeClass(count: number, isInspectorOpen: boolean): string {
-  if (count === 1) {
-    return 'w-full max-w-[760px] aspect-video';
-  }
-  if (count === 2) {
-    return isInspectorOpen 
-      ? 'w-full max-w-[480px] aspect-video'
-      : 'w-[calc(50%-8px)] min-w-[280px] max-w-[560px] aspect-video';
-  }
-  // 3 or more
-  return isInspectorOpen
-    ? 'w-[calc(50%-8px)] min-w-[240px] max-w-[380px] aspect-video'
-    : 'w-[calc(33.33%-12px)] min-w-[260px] max-w-[460px] aspect-video';
-}
-
 export function VideoGrid({
   localParticipant,
   localStream,
@@ -37,11 +22,32 @@ export function VideoGrid({
 }: VideoGridProps) {
   const allParticipants = [localParticipant, ...participants];
   const count = allParticipants.length;
-  const sizeClass = getCardSizeClass(count, isInspectorOpen);
+
+  let gridClass = '';
+  if (count === 1) {
+    gridClass = 'grid-cols-1 max-w-[800px]';
+  } else if (count === 2) {
+    gridClass = 'grid-cols-1 sm:grid-cols-2 max-w-[1100px]';
+  } else if (count === 3) {
+    gridClass = 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 max-w-[1300px]';
+  } else if (count === 4) {
+    gridClass = 'grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 max-w-[1400px]';
+  } else {
+    gridClass = 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 max-w-[1600px]';
+  }
+
+  // Adjust for open inspector panel
+  if (isInspectorOpen) {
+    if (count === 2) {
+      gridClass = 'grid-cols-1 max-w-[500px]';
+    } else if (count >= 3) {
+      gridClass = 'grid-cols-1 sm:grid-cols-2 max-w-[850px]';
+    }
+  }
 
   return (
-    <div className="w-full h-full flex items-center justify-center p-2 min-h-0 overflow-y-auto">
-      <div className="w-full flex flex-wrap gap-4 items-center justify-center">
+    <div className="w-full h-full flex items-center justify-center p-3 md:p-6 min-h-0 overflow-y-auto">
+      <div className={`w-full grid ${gridClass} gap-3 md:gap-4 items-center justify-center`}>
         <AnimatePresence>
           {/* Local tile */}
           <VideoTile
@@ -51,7 +57,7 @@ export function VideoGrid({
             isLocal
             isSpeaking={localParticipant.isSpeaking}
             isScreenShare={isScreenSharing}
-            className={sizeClass}
+            className="w-full h-full"
           />
 
           {/* Remote tiles */}
@@ -61,7 +67,7 @@ export function VideoGrid({
               participant={p}
               stream={remoteStreams.get(p.userId)}
               isSpeaking={p.isSpeaking}
-              className={sizeClass}
+              className="w-full h-full"
             />
           ))}
         </AnimatePresence>
