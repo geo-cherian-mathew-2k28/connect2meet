@@ -49,14 +49,19 @@ export function VideoGrid({
   // If count > 1, the remote participants are in a mobile grid, and local user is floating in the corner.
   const isMobilePiPActive = count > 1;
 
-  // Mobile grid column count for remote participants
+  // Mobile grid configuration for remote participants
   let mobileRemoteGridClass = '';
+  let mobileTileAspectClass = '';
+
   if (participants.length === 1) {
-    mobileRemoteGridClass = 'grid-cols-1 max-w-sm';
+    mobileRemoteGridClass = 'grid-cols-1 w-full max-w-[340px]';
+    mobileTileAspectClass = 'aspect-[3/4]'; // Tall vertical portrait card
   } else if (participants.length === 2) {
-    mobileRemoteGridClass = 'grid-cols-1 max-w-sm';
+    mobileRemoteGridClass = 'grid-cols-1 w-full max-w-[320px]';
+    mobileTileAspectClass = 'aspect-[4/3]'; // Stacked wider cards
   } else {
-    mobileRemoteGridClass = 'grid-cols-2 max-w-md';
+    mobileRemoteGridClass = 'grid-cols-2 w-full max-w-[360px]';
+    mobileTileAspectClass = 'aspect-[3/4]'; // 2x2 grid of vertical cards
   }
 
   return (
@@ -99,7 +104,7 @@ export function VideoGrid({
                     participant={p}
                     stream={remoteStreams.get(p.userId)}
                     isSpeaking={p.isSpeaking}
-                    className="w-full h-full aspect-video"
+                    className={`w-full h-full ${mobileTileAspectClass}`}
                   />
                 ))}
               </AnimatePresence>
@@ -120,7 +125,7 @@ export function VideoGrid({
           </div>
         ) : (
           /* Only local user in meeting */
-          <div className="w-full max-w-sm">
+          <div className="w-full max-w-[340px]">
             <VideoTile
               key="local-solo"
               participant={localParticipant}
@@ -128,7 +133,7 @@ export function VideoGrid({
               isLocal
               isSpeaking={localParticipant.isSpeaking}
               isScreenShare={isScreenSharing}
-              className="w-full h-full aspect-video"
+              className="w-full h-full aspect-[3/4]"
             />
           </div>
         )}

@@ -212,8 +212,8 @@ export default function Room() {
       )}
 
       {/* Top bar */}
-      <div className="h-14 bg-white/70 backdrop-blur-md border-b border-slate-200/50 flex items-center justify-between px-6 shrink-0 z-10 shadow-[0_1px_2px_rgba(0,0,0,0.01)]">
-        <div className="flex items-center gap-3">
+      <div className="h-14 bg-white/70 backdrop-blur-md border-b border-slate-200/50 flex items-center justify-between px-3 md:px-6 shrink-0 z-10 shadow-[0_1px_2px_rgba(0,0,0,0.01)]">
+        <div className="flex items-center gap-2 md:gap-3">
           <Button
             variant="ghost"
             size="icon-sm"
@@ -226,15 +226,15 @@ export default function Room() {
           <span className="text-slate-800 text-sm font-semibold tracking-tight">{roomId}</span>
 
           {/* E2EE Lock Indicator */}
-          <div className="flex items-center gap-1.5 ml-2 cursor-help" title="High Security End-to-End Encrypted (DTLS-SRTP)">
+          <div className="flex items-center gap-1.5 ml-1 md:ml-2 cursor-help" title="High Security End-to-End Encrypted (DTLS-SRTP)">
             <Lock className="w-3 h-3 text-emerald-600" />
-            <span className="text-[10px] text-emerald-700 bg-emerald-50/50 border border-emerald-100/60 font-bold px-1.5 py-0.5 rounded">SECURE</span>
+            <span className="hidden md:inline-block text-[10px] text-emerald-700 bg-emerald-50/50 border border-emerald-100/60 font-bold px-1.5 py-0.5 rounded">SECURE</span>
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
-          {/* Connection status */}
-          <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-100 rounded-lg px-2.5 py-1">
+        <div className="flex items-center gap-2 md:gap-3">
+          {/* Connection status (hidden on mobile) */}
+          <div className="hidden md:flex items-center gap-1.5 bg-slate-50 border border-slate-100 rounded-lg px-2.5 py-1">
             {iceState === 'connected' || iceState === 'completed' ? (
               <Wifi className="w-3.5 h-3.5 text-emerald-500" />
             ) : (
@@ -245,26 +245,26 @@ export default function Room() {
             </span>
           </div>
 
-          {/* RTT ping */}
+          {/* RTT ping (hidden on mobile) */}
           {snapshot?.currentRoundTripTime != null && snapshot.currentRoundTripTime > 0 && (
-            <Badge variant="default" className="text-xs border border-slate-200/85 text-slate-600 font-mono bg-white">
+            <Badge variant="default" className="hidden md:inline-flex text-xs border border-slate-200/85 text-slate-600 font-mono bg-white">
               {snapshot.currentRoundTripTime}ms
             </Badge>
           )}
 
-          {/* Learning mode badge */}
+          {/* Learning mode badge (hidden on mobile) */}
           {settings.isLearningMode && (
-            <Badge variant="blue" className="text-xs font-semibold">Learning Mode ON</Badge>
+            <Badge variant="blue" className="hidden md:inline-flex text-xs font-semibold">Learning Mode ON</Badge>
           )}
 
-          <div className="w-px h-4 bg-slate-200" />
+          <div className="hidden md:block w-px h-4 bg-slate-200" />
 
-          {/* Network Inspector Toggle button in header corner */}
+          {/* Network Inspector Toggle button in header corner (hidden on mobile) */}
           <Button
             variant={isInspectorOpen ? "default" : "outline"}
             size="sm"
             onClick={() => store.setInspectorOpen(!isInspectorOpen)}
-            className="text-xs font-semibold flex items-center gap-1.5 h-8 border-slate-250 cursor-pointer"
+            className="hidden md:flex text-xs font-semibold items-center gap-1.5 h-8 border-slate-250 cursor-pointer"
           >
             <Activity className="w-3.5 h-3.5" />
             Diagnostics
