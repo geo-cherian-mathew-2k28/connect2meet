@@ -66,59 +66,58 @@ export function VideoTile({ participant, stream, isLocal, isSpeaking, isScreenSh
       {/* Subtle bottom gradient to make overlay legible */}
       <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-slate-900/10 to-transparent pointer-events-none" />
 
-      {/* Bottom info bar */}
-      <div className="absolute bottom-3 left-3 right-3 p-1.5 rounded-xl bg-white/85 backdrop-blur-md border border-slate-200/50 flex items-center justify-between z-20 shadow-sm">
-        <div className="flex items-center gap-2 px-1">
-          {participant.isHost && (
-            <span className="bg-amber-500 text-white rounded-full p-0.5 shadow-sm">
-              <Crown className="w-3 h-3" />
-            </span>
-          )}
-          <span className="text-slate-800 text-xs font-semibold truncate max-w-[110px]">
-            {isLocal ? 'You' : displayName}
+      {/* Bottom-left name pill */}
+      <div className="absolute bottom-3 left-3 px-2.5 py-1 rounded-lg bg-white/90 backdrop-blur-md border border-slate-200/60 flex items-center gap-1.5 z-20 shadow-sm">
+        {participant?.isHost && (
+          <span className="bg-amber-500 text-white rounded-full p-0.5 shadow-sm shrink-0">
+            <Crown className="w-2.5 h-2.5" />
           </span>
-          {isLocal && (
-            <span className="text-slate-500 text-[9px] font-bold bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200/30">LOCAL</span>
+        )}
+        <span className="text-slate-800 text-xs font-semibold truncate max-w-[90px]">
+          {isLocal ? 'You' : displayName}
+        </span>
+        {isLocal && (
+          <span className="text-slate-500 text-[8px] font-bold bg-slate-100 px-1 py-0.5 rounded border border-slate-200/20">LOCAL</span>
+        )}
+      </div>
+
+      {/* Bottom-right status icons */}
+      <div className="absolute bottom-3 right-3 flex items-center gap-1 z-20">
+        <AnimatePresence>
+          {participant?.isMuted && (
+            <motion.span 
+              className="bg-rose-50/95 text-rose-600 rounded-lg p-1 border border-rose-100 flex items-center justify-center shadow-sm"
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              exit={{ scale: 0 }}
+            >
+              <MicOff className="w-3.5 h-3.5" />
+            </motion.span>
           )}
-        </div>
+        </AnimatePresence>
 
-        <div className="flex items-center gap-1.5 px-1">
-          <AnimatePresence>
-            {participant.isMuted && (
-              <motion.span 
-                className="bg-rose-50 text-rose-600 rounded-full p-1 shadow-sm border border-rose-100 flex items-center justify-center"
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                exit={{ scale: 0 }}
-              >
-                <MicOff className="w-3 h-3" />
-              </motion.span>
-            )}
-          </AnimatePresence>
-
-          <AnimatePresence>
-            {participant.isVideoOff && (
-              <motion.span 
-                className="bg-slate-100 text-slate-500 rounded-full p-1 shadow-sm border border-slate-200/40 flex items-center justify-center"
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                exit={{ scale: 0 }}
-              >
-                <VideoOff className="w-3 h-3" />
-              </motion.span>
-            )}
-          </AnimatePresence>
-
-          {quality && !isLocal && (
-            <span className={cn('rounded-full px-1.5 py-0.5 text-xs flex items-center justify-center font-semibold border', qualityColor(quality))}>
-              {quality === 'excellent' || quality === 'good' ? (
-                <Wifi className="w-3 h-3" />
-              ) : (
-                <WifiOff className="w-3 h-3" />
-              )}
-            </span>
+        <AnimatePresence>
+          {participant?.isVideoOff && (
+            <motion.span 
+              className="bg-slate-100/95 text-slate-500 rounded-lg p-1 border border-slate-200/40 flex items-center justify-center shadow-sm"
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              exit={{ scale: 0 }}
+            >
+              <VideoOff className="w-3.5 h-3.5" />
+            </motion.span>
           )}
-        </div>
+        </AnimatePresence>
+
+        {quality && !isLocal && (
+          <span className={cn('rounded-lg p-1 text-xs flex items-center justify-center font-semibold border bg-white/95 shadow-sm', qualityColor(quality))}>
+            {quality === 'excellent' || quality === 'good' ? (
+              <Wifi className="w-3.5 h-3.5" />
+            ) : (
+              <WifiOff className="w-3.5 h-3.5" />
+            )}
+          </span>
+        )}
       </div>
 
       {/* Hand raise indicator */}

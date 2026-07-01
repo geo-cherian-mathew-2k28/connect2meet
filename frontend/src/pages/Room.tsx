@@ -31,6 +31,7 @@ export default function Room() {
     isHandRaised, connectionState, iceState, toggleMute, toggleVideo,
     startScreenShare, stopScreenShare, toggleHand, sendReaction, leaveRoom,
     getActivePeerConnection, admissionStatus, pendingAdmissions, respondToAdmission,
+    isCaptionsEnabled, captions, toggleCaptions,
   } = useWebRTC(roomId ?? null, localUserId, settings.displayName);
 
   const { snapshot, history, quality } = useStats(getActivePeerConnection);
@@ -284,6 +285,27 @@ export default function Room() {
             isInspectorOpen={isInspectorOpen}
           />
 
+          {/* Real-time Captions Overlay */}
+          {isCaptionsEnabled && captions.length > 0 && (
+            <div className="absolute bottom-24 left-1/2 -translate-x-1/2 w-full max-w-2xl px-6 pointer-events-none z-30 space-y-2">
+              <AnimatePresence>
+                {captions.map((cap: { userId: string; displayName: string; text: string; id: string }) => (
+                  <motion.div
+                    key={cap.id}
+                    className="bg-slate-900/90 backdrop-blur-sm text-white px-4 py-2.5 rounded-xl text-center shadow-lg border border-slate-700/50"
+                    initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    <span className="text-[10px] uppercase tracking-wider font-extrabold text-blue-400 block mb-0.5">{cap.displayName}</span>
+                    <p className="text-sm font-semibold tracking-wide">{cap.text}</p>
+                  </motion.div>
+                ))}
+              </AnimatePresence>
+            </div>
+          )}
+
           {/* Controls */}
           <Controls
             isMuted={isMuted}
@@ -295,6 +317,8 @@ export default function Room() {
             isChatOpen={isChatOpen}
             isParticipantsPanelOpen={isParticipantsPanelOpen}
             participantCount={allParticipants.length}
+            isCaptionsEnabled={isCaptionsEnabled}
+            onToggleCaptions={toggleCaptions}
             onToggleMute={toggleMute}
             onToggleVideo={toggleVideo}
             onToggleScreenShare={isScreenSharing ? stopScreenShare : startScreenShare}

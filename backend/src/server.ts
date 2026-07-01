@@ -196,6 +196,12 @@ io.on('connection', (socket: Socket) => {
     socket.to(info.roomId).emit('reaction', payload);
   });
 
+  socket.on('caption', (payload: { userId: string; displayName: string; text: string }) => {
+    const info = socketUserMap.get(socket.id);
+    if (!info) return;
+    socket.to(info.roomId).emit('caption', payload);
+  });
+
   // ─── DISCONNECT ───────────────────────────────────────────────────────────
 
   socket.on('disconnect', () => {

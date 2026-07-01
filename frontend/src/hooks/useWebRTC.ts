@@ -46,6 +46,9 @@ export interface UseWebRTCReturn {
   admissionStatus: 'idle' | 'waiting' | 'approved' | 'denied';
   pendingAdmissions: { userId: string; displayName: string; socketId: string }[];
   respondToAdmission: (pendingSocketId: string, allowed: boolean) => void;
+  isCaptionsEnabled: boolean;
+  captions: { userId: string; displayName: string; text: string; id: string }[];
+  toggleCaptions: () => void;
 }
 
 export function useWebRTC(roomId: string | null, userId: string, displayName: string): UseWebRTCReturn {
@@ -131,6 +134,10 @@ export function useWebRTC(roomId: string | null, userId: string, displayName: st
 
   const [admissionStatus, setAdmissionStatus] = useState<'idle' | 'waiting' | 'approved' | 'denied'>('idle');
   const [pendingAdmissions, setPendingAdmissions] = useState<{ userId: string; displayName: string; socketId: string }[]>([]);
+
+  const [isCaptionsEnabled, setIsCaptionsEnabled] = useState(false);
+  const [captions, setCaptions] = useState<{ userId: string; displayName: string; text: string; id: string }[]>([]);
+  const recognitionRef = useRef<any>(null);
 
   // Helper to sync ref + state for remoteStreams
   const updateRemoteStreams = useCallback(() => {
@@ -389,6 +396,20 @@ export function useWebRTC(roomId: string | null, userId: string, displayName: st
       setTimeout(() => store.removeReaction(id), 4000);
     });
 
+    // Handler: captions
+    socket.on('caption', (payload: { userId: string; displayName: string; text: string }) => {
+      const captionId = Math.random().toString(36).substr(2, 9);
+      setCaptions((prev) => {
+        const filtered = prev.filter((c) => c.userId !== payload.userId);
+        return [...filtered, { ...payload, id: captionId }];
+      });
+
+      // Auto remove remote caption after 4 seconds
+      setTimeout(() => {
+        setCaptions((prev) => prev.filter((c) => c.id !== captionId));
+      }, 4000);
+    });
+
     // Start media then request join
     startLocalMedia().then(() => {
       socket.emit('request-join', { roomId, userId, displayName });
@@ -407,6 +428,7 @@ export function useWebRTC(roomId: string | null, userId: string, displayName: st
       socket.off('user-disconnected');
       socket.off('peer-state');
       socket.off('reaction');
+      socket.off('caption');
     };
   }, [roomId]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -620,6 +642,87 @@ export function useWebRTC(roomId: string | null, userId: string, displayName: st
     setPendingAdmissions((prev) => prev.filter((r) => r.socketId !== pendingSocketId));
   }, [roomId, pendingAdmissions, socket]);
 
+  // Speech Recognition hook logic
+  useEffect(() => {
+    if (!isCaptionsEnabled) {
+      if (recognitionRef.current) {
+        recognitionRef.current.stop();
+      }
+      return;
+    }
+
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      console.warn("Speech Recognition API not supported in this browser.");
+      setIsCaptionsEnabled(false);
+      return;
+    }
+
+    const recognition = new SpeechRecognition();
+    recognition.continuous = true;
+    recognition.interimResults = false;
+    recognition.lang = 'en-US';
+
+    recognition.onresult = (event: any) => {
+      let currentTranscript = '';
+      for (let i = event.resultIndex; i < event.results.length; ++i) {
+        if (event.results[i].isFinal) {
+          currentTranscript += event.results[i][0].transcript;
+        }
+      }
+
+      const text = currentTranscript.trim();
+      if (text) {
+        socket.emit('caption', {
+          userId,
+          displayName,
+          text,
+        });
+
+        const captionId = Math.random().toString(36).substr(2, 9);
+        setCaptions((prev) => {
+          const filtered = prev.filter((c) => c.userId !== userId);
+          return [...filtered, { userId, displayName: 'You', text, id: captionId }];
+        });
+
+        setTimeout(() => {
+          setCaptions((prev) => prev.filter((c) => c.id !== captionId));
+        }, 4000);
+      }
+    };
+
+    recognition.onerror = (e: any) => {
+      console.error("Speech recognition error:", e);
+    };
+
+    recognition.onend = () => {
+      if (isCaptionsEnabled) {
+        try {
+          recognition.start();
+        } catch (err) {
+          console.warn("Failed to restart speech recognition:", err);
+        }
+      }
+    };
+
+    recognitionRef.current = recognition;
+    try {
+      recognition.start();
+    } catch (err) {
+      console.error("Failed to start speech recognition:", err);
+    }
+
+    return () => {
+      if (recognitionRef.current) {
+        recognitionRef.current.stop();
+      }
+    };
+  }, [isCaptionsEnabled, userId, displayName]);
+
+  const toggleCaptions = useCallback(() => {
+    setIsCaptionsEnabled((prev) => !prev);
+  }, []);
+
   return {
     localStream,
     remoteStreams,
@@ -641,5 +744,8 @@ export function useWebRTC(roomId: string | null, userId: string, displayName: st
     admissionStatus,
     pendingAdmissions,
     respondToAdmission,
+    isCaptionsEnabled,
+    captions,
+    toggleCaptions,
   };
 }

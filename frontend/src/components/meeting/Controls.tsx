@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   Mic, MicOff, Video, VideoOff, Monitor, MessageSquare,
   Users, Activity, PhoneOff, Hand, Smile,
-  Copy, Check, Share2
+  Copy, Check, Share2, Subtitles
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tooltip } from '@/components/ui/tooltip';
@@ -19,6 +19,8 @@ interface ControlsProps {
   isChatOpen: boolean;
   isParticipantsPanelOpen: boolean;
   participantCount: number;
+  isCaptionsEnabled?: boolean;
+  onToggleCaptions?: () => void;
   onToggleMute: () => void;
   onToggleVideo: () => void;
   onToggleScreenShare: () => void;
@@ -36,7 +38,8 @@ const REACTIONS = ['👍', '❤️', '😂', '😮', '👏', '🎉'];
 export function Controls({
   isMuted, isVideoOff, isScreenSharing, isHandRaised,
   unreadCount, isInspectorOpen, isChatOpen, isParticipantsPanelOpen,
-  participantCount, onToggleMute, onToggleVideo, onToggleScreenShare,
+  participantCount, isCaptionsEnabled = false, onToggleCaptions,
+  onToggleMute, onToggleVideo, onToggleScreenShare,
   onToggleHand, onToggleChat, onToggleParticipants, onToggleInspector,
   onSendReaction, onLeave, roomId,
 }: ControlsProps) {
@@ -171,6 +174,22 @@ export function Controls({
             )}
           >
             <Hand className="w-4.5 h-4.5" />
+          </button>
+        </Tooltip>
+
+        {/* Captions Toggle */}
+        <Tooltip content={isCaptionsEnabled ? 'Turn off captions' : 'Turn on captions'}>
+          <button
+            id="btn-captions"
+            onClick={onToggleCaptions}
+            className={cn(
+              btnClass,
+              isCaptionsEnabled
+                ? "bg-blue-50 border-blue-200 text-blue-600 hover:bg-blue-100"
+                : "bg-white border-slate-200 text-slate-700 hover:bg-slate-50 hover:text-slate-900"
+            )}
+          >
+            <Subtitles className="w-4.5 h-4.5" />
           </button>
         </Tooltip>
 
