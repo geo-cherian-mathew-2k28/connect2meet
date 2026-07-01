@@ -23,9 +23,10 @@ export function VideoTile({ participant, stream, isLocal, isSpeaking, isScreenSh
     }
   }, [stream]);
 
-  const quality = participant.connectionQuality;
-  const hasVideo = stream && stream.getVideoTracks().some((t) => t.enabled && !participant.isVideoOff);
-  const displayName = participant.displayName || `Guest-${participant.userId.slice(-4)}`;
+  const quality = participant?.connectionQuality;
+  const hasVideo = stream && stream.getVideoTracks().some((t) => t.enabled && !participant?.isVideoOff);
+  const userId = participant?.userId || '';
+  const displayName = participant?.displayName || `Guest-${userId ? userId.slice(-4) : 'unknown'}`;
 
   return (
     <motion.div

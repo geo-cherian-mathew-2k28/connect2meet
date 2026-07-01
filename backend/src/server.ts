@@ -92,9 +92,9 @@ io.on('connection', (socket: Socket) => {
   socket.on('request-join', ({ roomId, userId, displayName }: JoinRoomPayload) => {
     const existingRoom = roomManager.getRoom(roomId);
 
-    // If the room doesn't exist, this user is the host. Admit them instantly.
-    if (!existingRoom) {
-      console.log(`[Lobby] Room ${roomId} does not exist. Admitting ${displayName} as Host.`);
+    // If the room doesn't exist, or this user is already registered as the host, admit them instantly.
+    if (!existingRoom || existingRoom.hostId === userId) {
+      console.log(`[Lobby] Admitting ${displayName} (${userId}) directly as Host.`);
       admitUser(socket, roomId, userId, displayName, true);
       return;
     }
