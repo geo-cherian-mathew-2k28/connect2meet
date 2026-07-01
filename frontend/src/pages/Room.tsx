@@ -68,13 +68,17 @@ export default function Room() {
     } else {
       openChat();
       store.setParticipantsPanelOpen(false);
+      store.setInspectorOpen(false);
     }
   };
 
   const handleToggleParticipants = () => {
     const next = !isParticipantsPanelOpen;
     store.setParticipantsPanelOpen(next);
-    if (next) store.setChatOpen(false);
+    if (next) {
+      store.setChatOpen(false);
+      store.setInspectorOpen(false);
+    }
   };
 
   // Build local participant from store + state
@@ -263,7 +267,14 @@ export default function Room() {
           <Button
             variant={isInspectorOpen ? "default" : "outline"}
             size="sm"
-            onClick={() => store.setInspectorOpen(!isInspectorOpen)}
+            onClick={() => {
+              const next = !isInspectorOpen;
+              store.setInspectorOpen(next);
+              if (next) {
+                store.setChatOpen(false);
+                store.setParticipantsPanelOpen(false);
+              }
+            }}
             className="hidden md:flex text-xs font-semibold items-center gap-1.5 h-8 border-slate-250 cursor-pointer"
           >
             <Activity className="w-3.5 h-3.5" />
@@ -325,7 +336,14 @@ export default function Room() {
             onToggleHand={toggleHand}
             onToggleChat={handleToggleChat}
             onToggleParticipants={handleToggleParticipants}
-            onToggleInspector={() => store.setInspectorOpen(!isInspectorOpen)}
+            onToggleInspector={() => {
+              const next = !isInspectorOpen;
+              store.setInspectorOpen(next);
+              if (next) {
+                store.setChatOpen(false);
+                store.setParticipantsPanelOpen(false);
+              }
+            }}
             onSendReaction={sendReaction}
             onLeave={handleLeave}
             roomId={roomId}

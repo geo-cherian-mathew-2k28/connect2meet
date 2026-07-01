@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { X, Crown, MicOff, VideoOff, Hand, Wifi, WifiOff, Volume2 } from 'lucide-react';
+import { X, Crown, MicOff, VideoOff, Hand, Wifi, WifiOff, Volume2, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { qualityColor } from '@/network/iceHelpers';
@@ -16,18 +16,28 @@ interface ParticipantsPanelProps {
 export function ParticipantsPanel({ participants, localUserId, isHost, onClose }: ParticipantsPanelProps) {
   return (
     <motion.div
-      className="w-72 flex flex-col bg-white border-l border-slate-100 shrink-0"
-      initial={{ x: 290 }}
+      className="w-full md:w-72 flex flex-col bg-white border-l border-slate-100 shrink-0 fixed md:relative inset-0 md:inset-auto z-50"
+      initial={{ x: '100%' }}
       animate={{ x: 0 }}
-      exit={{ x: 290 }}
+      exit={{ x: '100%' }}
       transition={{ type: 'spring', stiffness: 300, damping: 30 }}
     >
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b border-slate-100">
-        <h3 className="font-semibold text-slate-800">
-          Participants <span className="text-slate-400 font-normal">({participants.length})</span>
-        </h3>
-        <Button variant="ghost" size="icon-sm" onClick={onClose} id="btn-close-participants">
+        <div className="flex items-center gap-2">
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            onClick={onClose}
+            className="md:hidden text-slate-500 hover:text-slate-800"
+          >
+            <ArrowLeft className="w-4 h-4" />
+          </Button>
+          <h3 className="font-semibold text-slate-800">
+            Participants <span className="text-slate-400 font-normal">({participants.length})</span>
+          </h3>
+        </div>
+        <Button variant="ghost" size="icon-sm" onClick={onClose} id="btn-close-participants" className="hidden md:flex">
           <X className="w-4 h-4" />
         </Button>
       </div>

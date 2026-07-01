@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Send, Smile } from 'lucide-react';
+import { X, Send, Smile, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
@@ -45,16 +45,26 @@ export function ChatPanel({ messages, onSend, onClose, localUserId }: ChatPanelP
 
   return (
     <motion.div
-      className="w-80 flex flex-col bg-white border-l border-slate-100 shrink-0"
-      initial={{ x: 320 }}
+      className="w-full md:w-80 flex flex-col bg-white border-l border-slate-100 shrink-0 fixed md:relative inset-0 md:inset-auto z-50"
+      initial={{ x: '100%' }}
       animate={{ x: 0 }}
-      exit={{ x: 320 }}
+      exit={{ x: '100%' }}
       transition={{ type: 'spring', stiffness: 300, damping: 30 }}
     >
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b border-slate-100">
-        <h3 className="font-semibold text-slate-800">Chat</h3>
-        <Button variant="ghost" size="icon-sm" onClick={onClose} id="btn-close-chat">
+        <div className="flex items-center gap-2">
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            onClick={onClose}
+            className="md:hidden text-slate-500 hover:text-slate-800"
+          >
+            <ArrowLeft className="w-4 h-4" />
+          </Button>
+          <h3 className="font-semibold text-slate-800">Chat</h3>
+        </div>
+        <Button variant="ghost" size="icon-sm" onClick={onClose} id="btn-close-chat" className="hidden md:flex">
           <X className="w-4 h-4" />
         </Button>
       </div>

@@ -260,14 +260,6 @@ export function Controls({
 
       {/* ─── MOBILE CONTROLS VIEW (Google Meet Mobile Layout) ─── */}
       <div className="md:hidden relative z-40 h-24 bg-slate-900 border-t border-slate-800 flex items-center justify-around px-6 shrink-0 select-none pb-4">
-        {/* End Call (Red Button) */}
-        <button
-          onClick={onLeave}
-          className="w-12 h-12 rounded-full flex items-center justify-center bg-rose-600 hover:bg-rose-500 text-white active:scale-90 transition-all duration-200 cursor-pointer shadow-lg shadow-rose-900/30"
-        >
-          <PhoneOff className="w-5 h-5" />
-        </button>
-
         {/* Video Camera Toggle */}
         <button
           onClick={onToggleVideo}
@@ -313,6 +305,14 @@ export function Controls({
           className="w-12 h-12 rounded-full flex items-center justify-center bg-slate-800 border border-slate-700 text-slate-200 active:bg-slate-700 transition-all duration-200 cursor-pointer"
         >
           <MoreVertical className="w-5 h-5" />
+        </button>
+
+        {/* End Call (Red Button) */}
+        <button
+          onClick={onLeave}
+          className="w-12 h-12 rounded-full flex items-center justify-center bg-rose-600 hover:bg-rose-500 text-white active:scale-90 transition-all duration-200 cursor-pointer shadow-lg shadow-rose-900/30"
+        >
+          <PhoneOff className="w-5 h-5" />
         </button>
       </div>
 

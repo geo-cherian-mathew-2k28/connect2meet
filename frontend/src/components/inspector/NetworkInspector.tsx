@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Activity, ChevronRight, Wifi, Zap,
-  Radio, Shield, Monitor, Clock, TrendingUp, Info, Cpu, HardDrive
+  Radio, Shield, Monitor, Clock, TrendingUp, Info, Cpu, HardDrive, ArrowLeft
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -87,15 +87,23 @@ export function NetworkInspector({ snapshot, history, quality, isLearningMode, o
 
   return (
     <motion.div
-      className="w-80 flex flex-col bg-white border-l border-slate-200/60 shrink-0 overflow-hidden text-slate-700 select-none z-20 shadow-xl"
-      initial={{ x: 320 }}
+      className="w-full md:w-80 flex flex-col bg-white border-l border-slate-200/60 shrink-0 overflow-hidden text-slate-700 select-none z-50 fixed md:relative inset-0 md:inset-auto shadow-xl"
+      initial={{ x: '100%' }}
       animate={{ x: 0 }}
-      exit={{ x: 320 }}
+      exit={{ x: '100%' }}
       transition={{ type: 'spring', stiffness: 280, damping: 28 }}
     >
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b border-slate-100 shrink-0">
         <div className="flex items-center gap-2">
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            onClick={onClose}
+            className="md:hidden text-slate-500 hover:text-slate-800"
+          >
+            <ArrowLeft className="w-4 h-4" />
+          </Button>
           <Activity className="w-4 h-4 text-blue-650" />
           <h3 className="font-bold text-slate-900 tracking-tight text-sm">System Diagnostics</h3>
         </div>
@@ -106,7 +114,7 @@ export function NetworkInspector({ snapshot, history, quality, isLearningMode, o
           <button
             onClick={onClose}
             id="btn-close-inspector"
-            className="p-1 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-700 transition-colors cursor-pointer"
+            className="hidden md:block p-1 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-700 transition-colors cursor-pointer"
           >
             <ChevronRight className="w-4 h-4" />
           </button>
