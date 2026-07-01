@@ -25,6 +25,8 @@ const ICE_SERVERS: RTCIceServer[] = [
     : []),
 ];
 
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3001';
+
 export interface UseWebRTCReturn {
   localStream: MediaStream | null;
   remoteStreams: Map<string, MediaStream>;
@@ -69,34 +71,16 @@ export function useWebRTC(roomId: string | null, userId: string, displayName: st
     { urls: 'stun:stun1.l.google.com:19302' },
   ]);
 
-  // Fetch TURN credentials from Metered REST API on mount
+  // Fetch TURN credentials from backend REST API on mount
   useEffect(() => {
     let active = true;
     const fetchTurnCredentials = async () => {
-      const apiKey = import.meta.env.VITE_METERED_API_KEY;
-      if (!apiKey) {
-        console.warn('[WebRTC] VITE_METERED_API_KEY is not defined in environment variables. Falling back to local configuration.');
-        // Fallback to static TURN config if present
-        if (import.meta.env.VITE_TURN_URL) {
-          setIceServers([
-            { urls: 'stun:stun.l.google.com:19302' },
-            { urls: 'stun:stun1.l.google.com:19302' },
-            {
-              urls: import.meta.env.VITE_TURN_URL,
-              username: import.meta.env.VITE_TURN_USERNAME || '',
-              credential: import.meta.env.VITE_TURN_CREDENTIAL || '',
-            } as RTCIceServer
-          ]);
-        }
-        return;
-      }
-
       try {
-        const response = await fetch(`https://gcm.metered.live/api/v1/turn/credentials?apiKey=${apiKey}`);
-        if (!response.ok) throw new Error('Failed to fetch TURN credentials');
+        const response = await fetch(`${BACKEND_URL}/api/turn-credentials`);
+        if (!response.ok) throw new Error('Failed to fetch TURN credentials from backend');
         const fetchedServers = await response.json();
         if (active && Array.isArray(fetchedServers) && fetchedServers.length > 0) {
-          console.log('[WebRTC] Dynamically loaded Metered TURN servers:', fetchedServers.length);
+          console.log('[WebRTC] Dynamically loaded TURN servers from backend:', fetchedServers.length);
           setIceServers([
             { urls: 'stun:stun.l.google.com:19302' },
             { urls: 'stun:stun1.l.google.com:19302' },
@@ -104,7 +88,7 @@ export function useWebRTC(roomId: string | null, userId: string, displayName: st
           ]);
         }
       } catch (err) {
-        console.warn('[WebRTC] Failed to fetch TURN credentials from API, falling back to static config:', err);
+        console.warn('[WebRTC] Failed to fetch TURN credentials from backend API, falling back to static config:', err);
         if (import.meta.env.VITE_TURN_URL) {
           setIceServers([
             { urls: 'stun:stun.l.google.com:19302' },

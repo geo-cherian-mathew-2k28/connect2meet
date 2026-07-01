@@ -32,6 +32,49 @@ app.get('/health', (_req, res) => {
   });
 });
 
+// Fetch TURN credentials securely from Metered API on the backend
+app.get('/api/turn-credentials', async (_req, res) => {
+  const apiKey = process.env.METERED_API_KEY;
+  if (!apiKey) {
+    console.warn('[Backend] METERED_API_KEY is not defined in environment variables. Falling back to local configuration.');
+    if (process.env.TURN_URL) {
+      return res.json([
+        { urls: 'stun:stun.l.google.com:19302' },
+        { urls: 'stun:stun1.l.google.com:19302' },
+        {
+          urls: process.env.TURN_URL,
+          username: process.env.TURN_USERNAME || '',
+          credential: process.env.TURN_CREDENTIAL || '',
+        }
+      ]);
+    }
+    return res.json([]);
+  }
+
+  try {
+    const response = await fetch(`https://gcm.metered.live/api/v1/turn/credentials?apiKey=${apiKey}`);
+    if (!response.ok) {
+      throw new Error(`Metered API responded with status ${response.status}`);
+    }
+    const fetchedServers = await response.json();
+    return res.json(fetchedServers);
+  } catch (err) {
+    console.error('[Backend] Failed to fetch TURN credentials from API:', err);
+    if (process.env.TURN_URL) {
+      return res.json([
+        { urls: 'stun:stun.l.google.com:19302' },
+        { urls: 'stun:stun1.l.google.com:19302' },
+        {
+          urls: process.env.TURN_URL,
+          username: process.env.TURN_USERNAME || '',
+          credential: process.env.TURN_CREDENTIAL || '',
+        }
+      ]);
+    }
+    return res.json([]);
+  }
+});
+
 const server = http.createServer(app);
 
 const io = new Server(server, {
